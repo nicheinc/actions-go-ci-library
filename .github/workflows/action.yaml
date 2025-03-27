@@ -160,6 +160,9 @@ jobs:
     # inadvertently breaking semver. If we are purposefully breaking semver, we
     # should be able to do so.
     needs: [unit-test-and-lint]
+    # If the job was cancelled, no need to report this final status check.
+    if: |
+      !cancelled()
     steps:
       - name: Verify unit tests and linting passed with all Go versions
         run: |
