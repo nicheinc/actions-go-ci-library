@@ -71,10 +71,10 @@ jobs:
           # If any files would be changed by running gofumpt, then fail the
           # check.
           if [[ $(git status --porcelain) ]]; then
-            cat <<- EOF
-            The above files are not formatted with gofumpt.
-            Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes.
-            EOF
+            cat << EOF
+The above files are not formatted with gofumpt.
+Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes.
+EOF
           fi
 
   # Ensure code changes and go.mod are compatible.
