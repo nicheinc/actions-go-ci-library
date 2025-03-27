@@ -1,0 +1,108 @@
+name: CI
+permissions:
+  contents: read
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+jobs:
+  # Retrieve the minimum Go version from go.mod and output a matrix of all Go
+  # versions released since.
+  go-versions:
+    name: Check Go Versions
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.versions.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set Go Versions
+        uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
+        id: versions
+
+  # Run unit tests and go vet with each supported Go version.
+  unit-test-and-vet:
+    name: Unit test and vet with Go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    needs: go-versions
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Configure private Go modules
+        run: |
+          go env -w GOPRIVATE=github.com/nicheinc
+          git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
+
+      - name: Test
+        uses: robherley/go-test-action@b19f6aadabfb1ad85079065b21aa2af132466468
+        with:
+          testArguments: '-v -race ./...'
+
+      - name: Vet
+        run: |
+          go vet ./...
+
+  # Ensure code changes and go.mod are compatible.
+  validate-semver:
+    name: Validate semver
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Configure private Go modules
+        run: |
+          go env -w GOPRIVATE=github.com/nicheinc
+          git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
+
+      - name: Detect module version
+        id: get-module-version
+        run: |
+          regex='/v([0-9]+)$'
+          if [[ $(go list -m) =~ ${regex} ]]; then
+              version=${BASH_REMATCH[1]}
+              echo "go.mod version: v${version}"
+              echo "version=${version}" >> $GITHUB_OUTPUT
+          else
+              echo "Explicit version not found in go.mod - treating it as v0 for now."
+              echo "version=0" >> $GITHUB_OUTPUT
+          fi
+
+      # We could just run gorelease for this step, using its exit code to
+      # determine success or failure. However, gorelease can exit non-zero for
+      # reasons other than breaking changes, e.g. due to missing go.sum entries
+      # or retracted dependencies, which is more pedantic than we want to be.
+      # Instead, we'll capture the gorelease output and parse it for
+      # semver-related info.
+      - name: Use gorelease to detect breaking changes
+        id: gorelease
+        run: |
+          version=${{ steps.get-module-version.outputs.version }}
+          results=$(go run golang.org/x/exp/cmd/gorelease@latest -version=${version} || true)
+          echo "::group::gorelease output"
+          echo "${results}"
+          echo "::endgroup::"
+          if [[ ${results} =~ "is not a valid semantic version" ]]; then
+            echo "This PR may contain breaking changes incompatible with its module version. See gorelease output for details."
+            exit 1
+          elif [[ ${results} =~ "is a valid semantic version" ]]; then
+            echo "This PR's changes are compatible with its module version. 👍️"
+          else
+            echo "Could not determine validity of versioning. See gorelease output for details."
+          fi
+
