@@ -148,7 +148,7 @@ jobs:
     # should be able to do so.
     needs: [unit-test-and-lint]
     # If the job was cancelled, no need to report this final status check.
-    if |
+    if: |
       !cancelled()
     steps:
       - name: Verify unit tests and linting passed with all Go versions
