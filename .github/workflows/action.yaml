@@ -8,10 +8,6 @@ on:
     secrets:
       NPM_WRITE_TOKEN:
         required: true
-env:
-  VERSION_GOFUMPT: 86bffd62437a3c437c0b84d5d5ab244824e762fc           # v0.7.0
-  VERSION_GO_TEST_ACTION: b19f6aadabfb1ad85079065b21aa2af132466468    # v0.6.0
-  VERSION_GO_VERSION_ACTION: 077589a96e5aeea271983eb6f18465c54ea7f540 # v1.1.20
 jobs:
   # Retrieve the minimum Go version from go.mod and output a matrix of all Go
   # versions released since.
@@ -27,7 +23,7 @@ jobs:
 
       - name: Set Go Versions
         id: versions
-        uses: arnested/go-version-action@${{ env.VERSION_GO_VERSION_ACTION }}
+        uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
 
   # Run unit tests and linters with each supported Go version.
   unit-test-and-lint:
@@ -57,7 +53,7 @@ jobs:
 
       - name: Test
         id: test
-        uses: robherley/go-test-action@${{ env.VERSION_GO_TEST_ACTION }}
+        uses: robherley/go-test-action@b19f6aadabfb1ad85079065b21aa2af132466468
         with:
           testArguments: '-v -race ./...'
 
@@ -69,7 +65,8 @@ jobs:
       - name: gofumpt
         id: run-gofumpt
         run: |
-          go run mvdan.cc/gofumpt@${{ env.VERSION_GOFUMPT }} -l -w .
+          # gofumpt@v0.7.0
+          go run mvdan.cc/gofumpt@86bffd62437a3c437c0b84d5d5ab244824e762fc -l -w .
 
           # If any files would be changed by running gofumpt, then fail the
           # check.
