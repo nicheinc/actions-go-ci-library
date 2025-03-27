@@ -1,9 +1,11 @@
 name: CI
+# Restrict permissions to just reading contents.
 permissions:
   contents: read
+
+# This action is solely available as a re-usable action to be called from other
+# workflows.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_call:
     secrets:
       NPM_WRITE_TOKEN:
@@ -23,6 +25,7 @@ jobs:
 
       - name: Set Go Versions
         id: versions
+        # go-version-action@v1.1.20
         uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
 
   # Run unit tests and linters with each supported Go version.
@@ -48,7 +51,12 @@ jobs:
       - name: Configure private Go modules
         id: configure-private-modules
         run: |
+          # Tell go that github.com/nicheinc modules can't always be found on
+          # the public Go module mirror.
           go env -w GOPRIVATE=github.com/nicheinc
+
+          # Equip git with the NPM_WRITE_TOKEN that has permissions to read the
+          # contents of private repos in the nicheinc GitHub org.
           git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
 
       - name: Test
@@ -94,7 +102,12 @@ jobs:
       - name: Configure private Go modules
         id: configure-private-modules
         run: |
+          # Tell go that github.com/nicheinc modules can't always be found on
+          # the public Go module mirror.
           go env -w GOPRIVATE=github.com/nicheinc
+
+          # Equip git with the NPM_WRITE_TOKEN that has permissions to read the
+          # contents of private repos in the nicheinc GitHub org.
           git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
 
       - name: Detect module version
