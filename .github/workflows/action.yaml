@@ -18,11 +18,12 @@ jobs:
       matrix: ${{ steps.versions.outputs.matrix }}
     steps:
       - name: Checkout
+        id: checkout
         uses: actions/checkout@v4
 
       - name: Set Go Versions
-        uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
         id: versions
+        uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
 
   # Run unit tests and go vet with each supported Go version.
   unit-test-and-vet:
@@ -35,26 +36,43 @@ jobs:
         go: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
     steps:
       - name: Checkout code
+        id: checkout
         uses: actions/checkout@v4
 
       - name: Install Go
+        id: install-go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
 
       - name: Configure private Go modules
+        id: configure-private-modules
         run: |
           go env -w GOPRIVATE=github.com/nicheinc
           git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
 
       - name: Test
+        id: test
         uses: robherley/go-test-action@b19f6aadabfb1ad85079065b21aa2af132466468
         with:
           testArguments: '-v -race ./...'
 
       - name: Vet
+        id: vet
         run: |
           go vet ./...
+
+      - name: gofumpt
+        id: run-gofumpt
+        run: |
+          # gofumpt@v0.7.0
+          go run github.com/mvdan/gofumpt@86bffd62437a3c437c0b84d5d5ab244824e762fc -l -w .
+
+          # If any files would be changed by running gofumpt, then fail the
+          # check.
+          if [[ $(git status --porcelain) ]]; then
+            exit 1
+          fi
 
   # Ensure code changes and go.mod are compatible.
   validate-semver:
@@ -62,14 +80,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
+        id: checkout
         uses: actions/checkout@v4
 
       - name: Install Go
+        id: install-go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
       - name: Configure private Go modules
+        id: configure-private-modules
         run: |
           go env -w GOPRIVATE=github.com/nicheinc
           git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
