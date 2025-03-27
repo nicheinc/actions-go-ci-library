@@ -71,8 +71,8 @@ jobs:
           # If any files would be changed by running gofumpt, then fail the
           # check.
           if [[ $(git status --porcelain) ]]; then
-            echo "The above files are not formatted with gofumpt.
-Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes."
+            echo "The above files are not formatted with gofumpt."
+            echo "Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes."
             exit 1
           fi
 
@@ -131,5 +131,30 @@ Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes."
             echo "This PR's changes are compatible with its module version. 👍️"
           else
             echo "Could not determine validity of versioning. See gorelease output for details."
+          fi
+
+  # This job provides a single target that libraries can use for required
+  # status checks for branch protection rulesets. By combining all the required
+  # checks into this job, it allows us to change the set of required checks
+  # without needing to update the branch protection rules in all the repos
+  # using this action.
+  required-check:
+    name: Verify that all required jobs passed
+    runs-on: ubuntu-latest
+    # Generally speaking, we don't require that semver be respected in order to
+    # consider CI as passed. Though we generally do follow semver and want to
+    # be alerted in CI if a PR would break it, that's primarily to avoid
+    # inadvertently breaking semver. If we are purposefully breaking semver, we
+    # should be able to do so.
+    needs: [unit-test-and-lint]
+    # If the job was cancelled, no need to report this final status check.
+    if |
+      !cancelled()
+    steps:
+      - name: Verify unit tests and linting passed with all Go versions
+        run: |
+          result="${{ needs.unit-test-and-lint.result }}"
+          if [[ ${result} == 'failure' ]]; then
+            exit 1
           fi
 
