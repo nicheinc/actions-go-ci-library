@@ -4,6 +4,10 @@ permissions:
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call:
+    secrets:
+      NPM_WRITE_TOKEN:
+        required: true
 jobs:
   # Retrieve the minimum Go version from go.mod and output a matrix of all Go
   # versions released since.
