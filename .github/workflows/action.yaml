@@ -121,10 +121,18 @@ jobs:
         run: |
           results="$(go run golang.org/x/exp/cmd/gorelease@latest)"
           suggested_version_regex='Suggested version: (v[0-9]+\.[0-9]+\.[0-9]+)'
+
+          # Print the gorelease results for debugging purposes.
+          echo "::group::gorelease output"
+          echo "${results}"
+          echo "::endgroup::"
           
-          # If gorelease detects incompatible changes with the inferred base version,
-          # then we should flag the situation as requiring more attention from the
-          # developer.
+          # If gorelease detects incompatible changes with the inferred base
+          # version, then we should flag the situation as requiring more
+          # attention from the developer. This check will exclude _other_
+          # reasons why gorelease may not have been able to suggest a version,
+          # such as missing go.sum entries or retracted dependencies. Those
+          # should fall into the else case of this statement.
           if [[ ${results} =~ "Incompatible changes were detected" ]]; then
             echo "This PR may contain breaking changes incompatible with its module version. See gorelease output for details."
             exit 1
