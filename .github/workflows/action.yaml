@@ -119,7 +119,7 @@ jobs:
       - name: Use gorelease to detect breaking changes
         id: gorelease
         run: |
-          results="$(go run golang.org/x/exp/cmd/gorelease@latest)"
+          results="$(go run golang.org/x/exp/cmd/gorelease@latest || true)"
           suggested_version_regex='Suggested version: (v[0-9]+\.[0-9]+\.[0-9]+)'
 
           # Print the gorelease results for debugging purposes.
