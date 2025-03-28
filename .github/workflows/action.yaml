@@ -110,19 +110,6 @@ jobs:
           # contents of private repos in the nicheinc GitHub org.
           git config --global --add url.https://${{ secrets.NPM_WRITE_TOKEN }}@github.com/.insteadOf https://github.com/
 
-      - name: Detect module version
-        id: get-module-version
-        run: |
-          regex='/v([0-9]+)$'
-          if [[ $(go list -m) =~ ${regex} ]]; then
-              version=${BASH_REMATCH[1]}
-              echo "go.mod version: v${version}"
-              echo "version=${version}" >> $GITHUB_OUTPUT
-          else
-              echo "Explicit version not found in go.mod - treating it as v0 for now."
-              echo "version=0" >> $GITHUB_OUTPUT
-          fi
-
       # We could just run gorelease for this step, using its exit code to
       # determine success or failure. However, gorelease can exit non-zero for
       # reasons other than breaking changes, e.g. due to missing go.sum entries
@@ -132,19 +119,27 @@ jobs:
       - name: Use gorelease to detect breaking changes
         id: gorelease
         run: |
-          version=${{ steps.get-module-version.outputs.version }}
-          results=$(go run golang.org/x/exp/cmd/gorelease@latest -version=${version} || true)
-          echo "::group::gorelease output"
-          echo "${results}"
-          echo "::endgroup::"
-          if [[ ${results} =~ "is not a valid semantic version" ]]; then
+          results="$(go run golang.org/x/exp/cmd/gorelease@latest)"
+          suggested_version_regex='Suggested version: (v[0-9]+\.[0-9]+\.[0-9]+)'
+          
+          # If gorelease detects incompatible changes with the inferred base version,
+          # then we should flag the situation as requiring more attention from the
+          # developer.
+          if [[ ${results} =~ "Incompatible changes were detected" ]]; then
             echo "This PR may contain breaking changes incompatible with its module version. See gorelease output for details."
             exit 1
-          elif [[ ${results} =~ "is a valid semantic version" ]]; then
+          # If gorelease can suggest a version, that means either the proposed
+          # change is a minor or patch increment OR the developer correctly
+          # incremented the module's major version to account for their
+          # breaking change.
+          elif [[ ${results} =~ ${suggested_version_regex} ]]; then
+            suggested_version="${BASH_REMATCH[1]}"
             echo "This PR's changes are compatible with its module version. 👍️"
-          else
+            echo "Suggested version: ${suggested_version}"
+          else 
             echo "Could not determine validity of versioning. See gorelease output for details."
           fi
+
 
   # This job provides a single target that libraries can use for required
   # status checks for branch protection rulesets. By combining all the required
