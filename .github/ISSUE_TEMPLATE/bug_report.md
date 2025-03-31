@@ -1,10 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 **Describe the bug**
@@ -25,8 +24,8 @@ A clear and concise description of what actually happened.
 
 **Environment (please complete the following information):**
 
- - `actions-go-ci-library` version your workflow was using when you encountered this issue: 
- - runner details (OS, self-hosted, etc.):
+- `actions-go-ci-library` version your workflow was using when you encountered this issue:
+- runner details (OS, self-hosted, etc.):
 
 **Additional context**
 

@@ -33,4 +33,3 @@ enhancement to `actions-go-ci-library`.
    `main` branch of the GitHub repository using the template provided.
 4. Verify that all required checks pass.
 5. Wait for code review approval on your pull request.
-

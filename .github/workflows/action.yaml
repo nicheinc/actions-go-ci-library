@@ -54,7 +54,7 @@ jobs:
           # Therefore, we should verify that ALL of those Go versions will work
           # when compiling, testing, and vetting this library.
           go-version: ${{ matrix.go }}
-      
+
       - name: Configure private Go modules
         id: configure-private-modules
         run: |
@@ -72,7 +72,7 @@ jobs:
         id: test
         uses: robherley/go-test-action@b19f6aadabfb1ad85079065b21aa2af132466468
         with:
-          testArguments: '-v -race ./...'
+          testArguments: "-v -race ./..."
 
       - name: Vet
         id: vet
@@ -102,7 +102,7 @@ jobs:
           # library). Therefore, we can just run the linter once using the
           # latest stable Go release -- it's most helpful to the library
           # developer to see the 'latest and greatest' of linting results.
-          go-version: 'stable'
+          go-version: "stable"
 
       - name: gofumpt
         id: run-gofumpt
@@ -131,7 +131,7 @@ jobs:
         id: install-go
         uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: "stable"
 
       - name: Configure private Go modules
         id: configure-private-modules
@@ -160,7 +160,7 @@ jobs:
           echo "::group::gorelease output"
           echo "${results}"
           echo "::endgroup::"
-          
+
           # If gorelease detects incompatible changes with the inferred base
           # version, then we should flag the situation as requiring more
           # attention from the developer. This check will exclude _other_
@@ -181,7 +181,6 @@ jobs:
           else 
             echo "Could not determine validity of versioning. See gorelease output for details."
           fi
-
 
   # This job provides a single target that libraries can use for required
   # status checks for branch protection rulesets. By combining all the required
@@ -204,7 +203,7 @@ jobs:
           if [[ ${result} == "failure" ]]; then
             exit 1
           fi
-      - name: Verify linting passed 
+      - name: Verify linting passed
         run: |
           result="${{ needs.lint.result }}"
           if [[ ${result} == "failure" ]]; then
