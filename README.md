@@ -2,17 +2,17 @@
 
 `actions-go-ci-library` is a reusable
 [GitHub Actions](https://docs.github.com/en/actions) workflow providing CI
-and other automation for our Go library repos. It currently supports the
-following features:
+and other automation for our Go library repos. This action is designed to allow
+library maintainers to:
 
-- Ensure the library builds and passes unit tests on all Go versions between the
-  minimum supported major version in the `go.mod` file and the latest released
-  Go version.
-- Validating that open PRs meet our formatting standards.
-- Looking for incompatibilities between the module version in `go.mod` and
+- Ensure the library builds and passes unit tests on all Go minor versions
+  between the minimum supported Go minor version in the `go.mod` file and the
+  latest released Go minor version.
+- Validate that open PRs meet our formatting standards.
+- Flag incompatibilities between the module version in `go.mod` and
   source code changes.
-- Offers a single GHA job that can be used to gate PR merges on the success of
-  all other required jobs in the workflow.
+- Easily add a branch protection rulesets to gate PRs on whether all required CI
+  jobs pass.
 
 ## Usage
 
