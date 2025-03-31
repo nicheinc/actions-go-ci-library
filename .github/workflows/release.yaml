@@ -34,7 +34,7 @@ jobs:
         run: |
           IFS='.' read -r major minor patch <<< "${GITHUB_REF#refs/tags/v}"
           echo "major-version=${major}"
-          echo "major-version=${major}" >> $GITHUB_ENV
+          echo "major-version=${major}" >> $GITHUB_OUTPUT
 
       - name: Update Major Version Tag
         id: update-major-version-tag
