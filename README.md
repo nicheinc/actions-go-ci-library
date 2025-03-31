@@ -76,3 +76,25 @@ common CI checks dictated in `actions-go-ci-library` before they can be merged.
 
 Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions on how
 to contribute to this project.
+
+## Deployment
+
+To roll out a new version of `actions-go-ci-library`, you will need to tag a
+release following [semver](https://semver.org/) principles and push the new tag
+to the GitHub remote. Please use the GitHub Release UI to generate the new tag,
+as that will ensure that the tag is accompanied by helpful release notes.
+
+At that point, the [release.yaml](./.github/workflows/release.yaml) workflow
+will run and automatically update the "v{major}" tag corresponding to your new
+release.
+
+For instance, if you create a new release `v1.2.3`, the `release.yaml` workflow
+will automatically create or update the `v1` tag to point to the commit
+corresponding to `v1.2.3`. This way, calling repos that are using
+`actions-go-ci-library@v1` will automatically pick up the latest release in the
+`v1` series without needing to update their workflow files.
+
+Note: this deployment mechanism is only a good idea for repositories in the
+`nicheinc` organization, where we can trust that the `v1` tag will only be
+updated to point to stable, authorized releases. External callers of this
+workflow ought to pin to a specific commit hash instead.
