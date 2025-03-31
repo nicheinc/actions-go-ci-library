@@ -1,4 +1,3 @@
-
 # actions-go-ci-library
 
 `actions-go-ci-library` is a reusable
@@ -20,7 +19,7 @@ following features:
 See the `service`
 [`ci.yaml`](https://github.com/nicheinc/service/blob/main/.github/workflows/ci.yaml)
 for a typical example of a library repo workflow that calls
-  `actions-go-ci-library`.
+`actions-go-ci-library`.
 
 Any GHA workflow may make use of this re-usable action with a job like the
 following:
@@ -64,6 +63,7 @@ for the library:
 "Verify that all required jobs passed"
 
 We recommend setting up a branch protection ruleset in your library that:
+
 1. Requires a pull request before merging to the default branch.
 2. Requires the "Verify that all required jobs passed" status check to pass
    before pushing to the default branch.
@@ -76,4 +76,3 @@ common CI checks dictated in `actions-go-ci-library` before they can be merged.
 
 Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions on how
 to contribute to this project.
-
