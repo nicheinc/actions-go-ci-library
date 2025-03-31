@@ -1,0 +1,59 @@
+name: Release
+
+# This workflow needs write access because we are hoping to push tags to the
+# remote repository.
+permissions:
+  contents: write
+
+# This workflow is triggered on push events to tags that match the semantic
+# version pattern. For example, it will trigger on tags like v1.2.3, v2.0.0,
+# etc. It should NOT run on pushes to "release" tags like v1, v2, etc,
+# otherwise the workflow would be at risk of triggering itself.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  update-major-version-tag:
+    name: Update Major Version Tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        id: configure-git
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email ""
+
+      - name: Extract Major Version
+        id: extract-major-version
+        run: |
+          IFS='.' read -r major minor patch <<< "${GITHUB_REF#refs/tags/v}"
+          echo "major-version=${major}"
+          echo "major-version=${major}" >> $GITHUB_ENV
+
+      - name: Update Major Version Tag
+        id: update-major-version-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAJOR_VERSION: ${{ steps.extract-major-version.outputs.major-version }}
+        run: |
+          # The tag we need to update is v{major}, where {major} is the major
+          # version of the semver tag that this workflow was triggered by the
+          # creation of.
+          tag="v${MAJOR_VERSION}"
+
+          # We should have the code tagged with v{major}.{minor}.{patch}
+          # checked out right now, so we should take this commit and tag it
+          # with v{major} now. We use --force because there may already be a
+          # v{major} tag created by a previous release that we need to
+          # overwrite now.
+          git tag --force "${tag}"
+
+          # Finally, we force push the updated tag, purposefully overwriting
+          # any previous v{major} tags.
+          git push origin "${tag}" --force
