@@ -29,11 +29,17 @@ jobs:
   ci:
     name: Build, Test, and Lint
     uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v1
-    secrets: inherit
+    secrets:
+      NPM_READ_ACCESS: ${{ secrets.NPM_READ_ACCESS }}
 ```
 
-It's important to use `secrets: inherit` so that the action will have permission
-to read the same private repos as the calling repo does.
+Any repo using this action must have access to an Actions secret named
+`NPM_READ_ACCESS` containing a GitHub PAT token with read access to any private
+`nicheinc` repositories that this library depends on, then pass that token as a
+secret to the `actions-go-ci-library` re-usable action as above. This token
+allows the action to pull down the private dependencies to build and test the
+library for library repositories that don't have vendored dependencies checked
+into the repo.
 
 We recommend running the workflow containing this job on all events relevant to
 pull requests to ensure that library developers get useful feedback on their
@@ -53,6 +59,16 @@ and lint it.
 permissions:
   contents: read
 ```
+
+### Dependabot
+
+This action can also be run on security update PRs created by Dependabot.
+However, keep in mind that GHA runs triggered by Dependabot do not use the same
+Actions secrets as GHA runs triggered by humans, but instead use a separate set
+of Dependabot secrets. If you want to use a workflow that calls this action on
+Dependabot PRs, make sure that your repository's Dependabot secrets contains 
+an `NPM_READ_ACCESS` secret with a GitHub PAT token that has read access to
+any private `nicheinc` repositories that this library depends on.
 
 ## Status checks
 
