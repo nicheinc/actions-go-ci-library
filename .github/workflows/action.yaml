@@ -9,23 +9,22 @@ permissions:
 on:
   workflow_call:
     secrets:
+      # NPM_READ_ACCESS ought to be a GitHub token with read access to any and
+      # all private nicheinc repositories containing Go modules that this
+      # library depends on.
+
+      # This action needs this token in order to be able to pull source code
+      # from GitHub while building the library under test. This allows this
+      # re-usable action to run for any Go module that depends on nicheinc
+      # GitHub repositories, even if the library doesn't itself have vendored
+      # dependencies checked into the repo.
+
+      # If the library being tested doesn't have any dependencies on private
+      # nicheinc repositories, then this token is not required. The action will
+      # still be able to pull any public dependencies from the public Go module
+      # mirror.
       NPM_READ_ACCESS:
         required: false
-        decsription: |
-          NPM_READ_ACCESS ought to be a GitHub token with read access to any and
-          all private nicheinc repositories containing Go modules that this
-          library depends on.
-
-          This action needs this token in order to be able to pull source code
-          from GitHub while building the library under test. This allows this
-          re-usable action to run for any Go module that depends on nicheinc
-          GitHub repositories, even if the library doesn't itself have vendored
-          dependencies checked into the repo.
-
-          If the library being tested doesn't have any dependencies on private
-          nicheinc repositories, then this token is not required. The action will
-          still be able to pull any public dependencies from the public Go module
-          mirror.
 
 jobs:
   # Retrieve the minimum Go version from go.mod and output a matrix of all Go
