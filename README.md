@@ -82,7 +82,7 @@ Actions secrets as GHA runs triggered by humans, but instead use a separate set
 of Dependabot secrets. If you want to use a workflow that calls this action on
 Dependabot PRs, make sure that your repository's Dependabot secrets contains a
 `NPM_READ_ACCESS` secret token with the same permissions as the one in your
-repositories Actions secrets list.
+repository's Actions secrets list.
 
 ## Status checks
 
