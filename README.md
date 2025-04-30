@@ -54,16 +54,16 @@ permissions:
 ### Private dependencies
 
 If the library depends on Go modules in private `nicheinc` GitHub repositories,
-you should invoke the `actions-go-ci-library` action with the `NPM_READ_ACCESS`
-secret set to a GitHub PAT token with read access to those private repositories.
-This token allows the action to pull down the private dependencies to build and
-test the library for repos that depend on private `nicheinc` dependencies but
-don't have their dependencies vendored and checked into the repo.
+you should invoke the `actions-go-ci-library` action with the
+`READ_ACCESS_TOKEN` secret set to a GitHub PAT token with read access to those
+private repositories.  This token allows the action to pull down the private
+dependencies to build and test the library for repos that depend on private
+`nicheinc` dependencies but don't have their dependencies vendored and checked
+into the repo.
 
-We recommend giving your repository access to a GitHub token as a repository
-Actions secret or organization Actions secret also named `NPM_READ_ACCESS` for
-easier management, then passing it to the re-usable action in a job like the
-following:
+The easiest way to set up this token is likely to re-use the existing
+`NPM_READ_ACCESS` org secret, which is a GitHub token with read access to all 
+`nicheinc` repositories.
 
 ```yaml
 jobs:
@@ -71,7 +71,7 @@ jobs:
     name: Build, Test, and Lint
     uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v2
     secrets:
-      NPM_READ_ACCESS: ${{ secrets.NPM_READ_ACCESS }}
+      READ_ACCESS_TOKEN: ${{ secrets.NPM_READ_ACCESS }}
 ```
 
 #### Dependabot
@@ -81,7 +81,7 @@ However, keep in mind that GHA runs triggered by Dependabot do not use the same
 Actions secrets as GHA runs triggered by humans, but instead use a separate set
 of Dependabot secrets. If you want to use a workflow that calls this action on
 Dependabot PRs, make sure that your repository's Dependabot secrets contains a
-`NPM_READ_ACCESS` secret token with the same permissions as the one in your
+`READ_ACCESS_TOKEN` secret token with the same permissions as the one in your
 repository's Actions secrets list.
 
 ## Status checks

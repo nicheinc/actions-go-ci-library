@@ -9,7 +9,7 @@ permissions:
 on:
   workflow_call:
     secrets:
-      # NPM_READ_ACCESS ought to be a GitHub token with read access to any and
+      # READ_ACCESS_TOKEN ought to be a GitHub token with read access to any and
       # all private nicheinc repositories containing Go modules that this
       # library depends on.
 
@@ -23,7 +23,7 @@ on:
       # nicheinc repositories, then this token is not required. The action will
       # still be able to pull any public dependencies from the public Go module
       # mirror.
-      NPM_READ_ACCESS:
+      READ_ACCESS_TOKEN:
         required: false
 
 jobs:
@@ -71,23 +71,23 @@ jobs:
           # when compiling, testing, and vetting this library.
           go-version: ${{ matrix.go }}
 
-        # We only need to configure private Go modules if the NPM_READ_ACCESS
+        # We only need to configure private Go modules if the READ_ACCESS_TOKEN
         # secret is present, indicating the module depends on private Go
         # modules.
       - name: Configure private Go modules
         id: configure-private-modules
-        if: env.NPM_READ_ACCESS
+        if: env.READ_ACCESS_TOKEN
         env:
-          NPM_READ_ACCESS: ${{ secrets.NPM_READ_ACCESS }}
+          READ_ACCESS_TOKEN: ${{ secrets.READ_ACCESS_TOKEN }}
         run: |
           # Tell go that github.com/nicheinc modules can't always be found on
           # the public Go module mirror.
           go env -w GOPRIVATE=github.com/nicheinc
 
-          # Equip git with the NPM_READ_ACCESS token that has permissions to
+          # Equip git with the READ_ACCESS_TOKEN token that has permissions to
           # read the contents of private repos in the nicheinc GitHub org.
           git config --global --add \
-            url.https://${{ env.NPM_READ_ACCESS }}@github.com/.insteadOf \
+            url.https://${{ env.READ_ACCESS_TOKEN }}@github.com/.insteadOf \
             https://github.com/
 
       - name: Test
@@ -155,23 +155,23 @@ jobs:
         with:
           go-version: "stable"
 
-        # We only need to configure private Go modules if the NPM_READ_ACCESS
+        # We only need to configure private Go modules if the READ_ACCESS_TOKEN
         # secret is present, indicating the module depends on private Go
         # modules.
       - name: Configure private Go modules
         id: configure-private-modules
-        if: env.NPM_READ_ACCESS
+        if: env.READ_ACCESS_TOKEN
         env:
-          NPM_READ_ACCESS: ${{ secrets.NPM_READ_ACCESS }}
+          READ_ACCESS_TOKEN: ${{ secrets.READ_ACCESS_TOKEN }}
         run: |
           # Tell go that github.com/nicheinc modules can't always be found on
           # the public Go module mirror.
           go env -w GOPRIVATE=github.com/nicheinc
 
-          # Equip git with the NPM_READ_ACCESS token that has permissions to
+          # Equip git with the READ_ACCESS_TOKEN token that has permissions to
           # read the contents of private repos in the nicheinc GitHub org.
           git config --global --add \
-            url.https://${{ env.NPM_READ_ACCESS }}@github.com/.insteadOf \
+            url.https://${{ env.READ_ACCESS_TOKEN }}@github.com/.insteadOf \
             https://github.com/
 
       # We could just run gorelease for this step, using its exit code to
