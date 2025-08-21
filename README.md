@@ -28,12 +28,9 @@ following:
 jobs:
   ci:
     name: Build, Test, and Lint
-    uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v1
-    secrets: inherit
+    uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v2
 ```
 
-It's important to use `secrets: inherit` so that the action will have permission
-to read the same private repos as the calling repo does.
 
 We recommend running the workflow containing this job on all events relevant to
 pull requests to ensure that library developers get useful feedback on their
@@ -53,6 +50,39 @@ and lint it.
 permissions:
   contents: read
 ```
+
+### Private dependencies
+
+If the library depends on Go modules in private `nicheinc` GitHub repositories,
+you should invoke the `actions-go-ci-library` action with the
+`READ_ACCESS_TOKEN` secret set to a GitHub PAT token with read access to those
+private repositories.  This token allows the action to pull down the private
+dependencies to build and test the library for repos that depend on private
+`nicheinc` dependencies but don't have their dependencies vendored and checked
+into the repo.
+
+The easiest way to set up this token is likely to re-use the existing
+`NPM_READ_ACCESS` org secret, which is a GitHub token with read access to all 
+`nicheinc` repositories.
+
+```yaml
+jobs:
+  ci:
+    name: Build, Test, and Lint
+    uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v2
+    secrets:
+      READ_ACCESS_TOKEN: ${{ secrets.NPM_READ_ACCESS }}
+```
+
+#### Dependabot
+
+This action can also be run on security update PRs created by Dependabot.
+However, keep in mind that GHA runs triggered by Dependabot do not use the same
+Actions secrets as GHA runs triggered by humans, but instead use a separate set
+of Dependabot secrets. If you want to use a workflow that calls this action on
+Dependabot PRs, make sure that your repository's Dependabot secrets contains a
+`READ_ACCESS_TOKEN` secret token with the same permissions as the one in your
+repository's Actions secrets list.
 
 ## Status checks
 
