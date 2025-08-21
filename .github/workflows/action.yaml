@@ -136,7 +136,7 @@ jobs:
           # check.
           if [[ $(git status --porcelain) ]]; then
             echo "The above files are not formatted with gofumpt."
-            echo "Please run 'go run mvdan.cc/gofumpt -l -w .' and commit the changes."
+            echo "Please run 'go run mvdan.cc/gofumpt@latest -l -w .' and commit the changes."
             exit 1
           fi
 
