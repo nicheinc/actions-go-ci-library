@@ -8,6 +8,15 @@ permissions:
 # workflows.
 on:
   workflow_call:
+    inputs:
+      module-root-filepath:
+        description: >
+          The filepath within the repository at which the Go module to be CI'ed
+          is located. By default, this action assumes the Go module is located
+          at the root of the repository.
+        required: false
+        default: .
+        type: string
     secrets:
       # READ_ACCESS_TOKEN ought to be a GitHub token with read access to any and
       # all private nicheinc repositories containing Go modules that this
@@ -43,11 +52,16 @@ jobs:
         id: versions
         # go-version-action@v1.1.20
         uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
+        with:
+          working-directory: ${{ inputs.module-root-filepath }}
 
   # Run unit tests and go vet with each supported Go version.
   unit-test-and-vet:
     name: Unit test and vet with Go ${{ matrix.go }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.module-root-filepath }}
     needs: go-versions
     strategy:
       fail-fast: false
@@ -95,6 +109,7 @@ jobs:
         uses: robherley/go-test-action@b19f6aadabfb1ad85079065b21aa2af132466468
         with:
           testArguments: "-v -race ./..."
+          # moduleDirectory: ${{ inputs.module-root-filepath }}
 
       - name: Vet
         id: vet
@@ -105,6 +120,9 @@ jobs:
   lint:
     name: Run linter
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.module-root-filepath }}
     steps:
       - name: Checkout code
         id: checkout
@@ -144,6 +162,9 @@ jobs:
   validate-semver:
     name: Validate semver
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.module-root-filepath }}
     steps:
       - name: Checkout repo
         id: checkout
