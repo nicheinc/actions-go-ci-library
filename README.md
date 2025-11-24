@@ -31,7 +31,6 @@ jobs:
     uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v2
 ```
 
-
 We recommend running the workflow containing this job on all events relevant to
 pull requests to ensure that library developers get useful feedback on their
 changes.
@@ -51,18 +50,35 @@ permissions:
   contents: read
 ```
 
+### Non standard module locations
+
+If your Go module is not located at the repository root (i.e., the `go.mod` file
+is not in the repository root), you will need to set the `module-root-filepath`
+input to point to the directory containing the `go.mod` file as a relative
+filepath from the repository root. For example, if your `go.mod` file is located
+in the `src/` directory, you would set the input like so:
+
+```yaml
+jobs:
+  ci:
+    name: Build, Test, and Lint
+    uses: nicheinc/actions-go-ci-library/.github/workflows/action.yaml@v2
+    with:
+      module-root-filepath: src
+```
+
 ### Private dependencies
 
 If the library depends on Go modules in private `nicheinc` GitHub repositories,
 you should invoke the `actions-go-ci-library` action with the
 `READ_ACCESS_TOKEN` secret set to a GitHub PAT token with read access to those
-private repositories.  This token allows the action to pull down the private
+private repositories. This token allows the action to pull down the private
 dependencies to build and test the library for repos that depend on private
 `nicheinc` dependencies but don't have their dependencies vendored and checked
 into the repo.
 
 The easiest way to set up this token is likely to re-use the existing
-`NPM_READ_ACCESS` org secret, which is a GitHub token with read access to all 
+`NPM_READ_ACCESS` org secret, which is a GitHub token with read access to all
 `nicheinc` repositories.
 
 ```yaml
