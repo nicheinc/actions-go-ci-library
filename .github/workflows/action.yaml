@@ -162,13 +162,19 @@ jobs:
   validate-semver:
     name: Validate semver
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ inputs.module-root-filepath }}
     steps:
-      - name: Checkout repo
-        id: checkout
+      - name: Checkout base branch
+        id: checkout-base
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base-branch
+
+      - name: Checkout current branch
+        id: checkout-current
+        uses: actions/checkout@v4
+        with:
+          path: current-branch
 
       - name: Install Go
         id: install-go
@@ -195,42 +201,69 @@ jobs:
             url.https://${{ env.READ_ACCESS_TOKEN }}@github.com/.insteadOf \
             https://github.com/
 
-      # We could just run gorelease for this step, using its exit code to
-      # determine success or failure. However, gorelease can exit non-zero for
-      # reasons other than breaking changes, e.g. due to missing go.sum entries
-      # or retracted dependencies, which is more pedantic than we want to be.
-      # Instead, we'll capture the gorelease output and parse it for
-      # semver-related info.
-      - name: Use gorelease to detect breaking changes
-        id: gorelease
+      - name: Detect module version on base branch
+        id: get-base-module-version
+        working-directory: base-branch/${{ inputs.module-root-filepath }}
         run: |
-          results="$(go run golang.org/x/exp/cmd/gorelease@latest || true)"
-          suggested_version_regex='Suggested version: (v[0-9]+\.[0-9]+\.[0-9]+)'
+          regex='/v([0-9]+)$'
+          if [[ $(go list -m) =~ ${regex} ]]; then
+              version=${BASH_REMATCH[1]}
+          else
+              echo "Explicit version not found in go.mod - treating it as v1."
+              version=1
+          fi
+          echo "Base branch module version: v${version}"
+          echo "version=${version}" >> $GITHUB_OUTPUT
 
-          # Print the gorelease results for debugging purposes.
-          echo "::group::gorelease output"
+      - name: Detect module version on current branch
+        id: get-current-module-version
+        working-directory: current-branch/${{ inputs.module-root-filepath }}
+        run: |
+          regex='/v([0-9]+)$'
+          if [[ $(go list -m) =~ ${regex} ]]; then
+              version=${BASH_REMATCH[1]}
+          else
+              echo "Explicit version not found in go.mod - treating it as v1."
+              version=1
+          fi
+          echo "Current branch module version: v${version}"
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Use apidiff to detect breaking changes
+        id: apidiff
+        run: |
+          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20251002181428-27f1f14c8bb9 # 2025-10-02
+
+          # Generate export data for each branch.
+          (
+            cd base-branch/${{ inputs.module-root-filepath }}
+            apidiff -m -w "${{ github.workspace }}"/baseline.txt ./...
+          )
+          (
+            cd current-branch/${{ inputs.module-root-filepath }}
+            apidiff -m -w "${{ github.workspace }}"/new.txt ./...
+          )
+
+          results=$(apidiff -m -incompatible baseline.txt new.txt)
+          echo "::group::apidiff output"
+          echo "Breaking changes:"
           echo "${results}"
           echo "::endgroup::"
 
-          # If gorelease detects incompatible changes with the inferred base
-          # version, then we should flag the situation as requiring more
-          # attention from the developer. This check will exclude _other_
-          # reasons why gorelease may not have been able to suggest a version,
-          # such as missing go.sum entries or retracted dependencies. Those
-          # should fall into the else case of this statement.
-          if [[ ${results} =~ "Incompatible changes were detected" ]]; then
-            echo "This PR may contain breaking changes incompatible with its module version. See gorelease output for details."
+          if [[ -z ${results} ]]; then
+            echo "No breaking changes detected."
+            exit 0
+          fi
+
+          echo "This PR may contain breaking changes. See apidiff output for details."
+          baseline=${{ steps.get-base-module-version.outputs.version }}
+          new=${{ steps.get-current-module-version.outputs.version }}
+          if [[ ${baseline} == ${new} ]]; then
+            echo "Is this breakage intentional? If so, consider incrementing the module version."
+            echo "Alternatively, if the affected packages are not intended to be part of this"
+            echo "module's public API, consider making them internal. Finally, if this module is"
+            echo "on v0, you may choose to ignore this error."
             exit 1
-          # If gorelease can suggest a version, that means either the proposed
-          # change is a minor or patch increment OR the developer correctly
-          # incremented the module's major version to account for their
-          # breaking change.
-          elif [[ ${results} =~ ${suggested_version_regex} ]]; then
-            suggested_version="${BASH_REMATCH[1]}"
-            echo "This PR's changes are compatible with its module version. 👍️"
-            echo "Suggested version: ${suggested_version}"
-          else
-            echo "Could not determine validity of versioning. See gorelease output for details."
           fi
 
   # This job provides a single target that libraries can use for required
