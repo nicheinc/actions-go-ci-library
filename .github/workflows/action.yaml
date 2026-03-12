@@ -232,7 +232,7 @@ jobs:
       - name: Use apidiff to detect breaking changes
         id: apidiff
         run: |
-          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20251002181428-27f1f14c8bb9 # 2025-10-02
+          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260312153236-7ab1446f8b90 # 2026-03-12
 
           # Generate export data for each branch.
           (
