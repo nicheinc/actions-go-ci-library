@@ -15,5 +15,5 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  release:
+  update-major-version-tag:
     uses: nicheinc/actions-tag-versions/.github/workflows/action.yaml@v1
