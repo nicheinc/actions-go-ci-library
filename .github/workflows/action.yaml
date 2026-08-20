@@ -36,37 +36,13 @@ on:
         required: false
 
 jobs:
-  # Retrieve the minimum Go version from go.mod and output a matrix of all Go
-  # versions released since.
-  go-versions:
-    name: Check Go Versions
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.versions.outputs.matrix }}
-    steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v4
-
-      - name: Set Go Versions
-        id: versions
-        # go-version-action@v1.1.20
-        uses: arnested/go-version-action@b4aefb809febc150eb645efd31b1a3fd50b2068a
-        with:
-          working-directory: ${{ inputs.module-root-filepath }}
-
-  # Run unit tests and go vet with each supported Go version.
+  # Run unit tests and go vet with the Go version pinned in go.mod.
   unit-test-and-vet:
-    name: Unit test and vet with Go ${{ matrix.go }}
+    name: Unit test and vet
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ inputs.module-root-filepath }}
-    needs: go-versions
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
     steps:
       - name: Checkout code
         id: checkout
@@ -76,14 +52,12 @@ jobs:
         id: install-go
         uses: actions/setup-go@v5
         with:
-          # Callers using the library undergoing CI may use the library in a
-          # project built with any Go version greater than or equal to the
-          # minimum Go version specified in the library's go.mod file. When
-          # they do that, they will expect the code in this library to compile,
-          # run tests, and vet against that specific Go minor version.
-          # Therefore, we should verify that ALL of those Go versions will work
-          # when compiling, testing, and vetting this library.
-          go-version: ${{ matrix.go }}
+          # Test and vet only against the Go version pinned in the library's
+          # go.mod. We previously tested against that version and every later
+          # release, but that caused spurious CI failures whenever a new Go
+          # release changed behavior, in code that was never built with that
+          # version in practice.
+          go-version-file: ${{ inputs.module-root-filepath }}/go.mod
 
         # We only need to configure private Go modules if the READ_ACCESS_TOKEN
         # secret is present, indicating the module depends on private Go
@@ -281,7 +255,7 @@ jobs:
     # should be able to do so.
     needs: [unit-test-and-vet, lint]
     steps:
-      - name: Verify unit tests passed with all Go versions
+      - name: Verify unit tests passed
         run: |
           result="${{ needs.unit-test-and-vet.result }}"
           if [[ ${result} == "failure" ]]; then
