@@ -147,8 +147,8 @@ jobs:
       - name: gofumpt
         id: run-gofumpt
         run: |
-          # gofumpt@v0.7.0
-          go run mvdan.cc/gofumpt@86bffd62437a3c437c0b84d5d5ab244824e762fc -l -w .
+          # This release is immutable and therefore safe to pin.
+          go run mvdan.cc/gofumpt@v0.11.0 -l -w .
 
           # If any files would be changed by running gofumpt, then fail the
           # check.
@@ -232,7 +232,7 @@ jobs:
       - name: Use apidiff to detect breaking changes
         id: apidiff
         run: |
-          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260312153236-7ab1446f8b90 # 2026-03-12
+          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260908205506-85c1c2202aba # 2026-09-08
 
           # Generate export data for each branch.
           (
