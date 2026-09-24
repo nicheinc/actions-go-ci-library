@@ -205,6 +205,13 @@ jobs:
         id: get-base-module-version
         working-directory: base-branch/${{ inputs.module-root-filepath }}
         run: |
+          if [[ ! -f go.mod ]]; then
+              echo "No go.mod found on base branch - this is likely the library's first PR."
+              echo "has-module=false" >> $GITHUB_OUTPUT
+              exit 0
+          fi
+          echo "has-module=true" >> $GITHUB_OUTPUT
+
           regex='/v([0-9]+)$'
           if [[ $(go list -m) =~ ${regex} ]]; then
               version=${BASH_REMATCH[1]}
@@ -231,6 +238,7 @@ jobs:
 
       - name: Use apidiff to detect breaking changes
         id: apidiff
+        if: steps.get-base-module-version.outputs.has-module == 'true'
         run: |
           go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260312153236-7ab1446f8b90 # 2026-03-12
 
