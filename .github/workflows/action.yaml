@@ -148,7 +148,7 @@ jobs:
         id: run-gofumpt
         run: |
           # This release is immutable and therefore safe to pin.
-          go run mvdan.cc/gofumpt@v0.11.0 -l -w .
+          go run mvdan.cc/gofumpt@v0.12.0 -l -w .
 
           # If any files would be changed by running gofumpt, then fail the
           # check.
